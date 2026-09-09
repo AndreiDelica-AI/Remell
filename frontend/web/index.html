@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+  <meta name="google-signin-client_id" content="505668352242-4qgrmkc7avlp3ltnfphf2skqvdbat1th.apps.googleusercontent.com">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="remell">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>remell</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script>
+    (function() {
+      let ctx = null;
+
+      function initAudio() {
+        if (ctx) return;
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            ctx = new AudioCtx();
+            console.log("AudioContext pre-initialized");
+          }
+        } catch (e) {
+          console.warn("Failed to init AudioContext:", e);
+        }
+      }
+
+      function unlockAudio() {
+        initAudio();
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().then(() => {
+            console.log("AudioContext successfully unlocked");
+          });
+        }
+      }
+
+      window.addEventListener('click', unlockAudio, { once: true });
+      window.addEventListener('touchstart', unlockAudio, { once: true });
+
+      window.playChalkSound = function() {
+        try {
+          initAudio();
+          if (!ctx) return;
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+
+          // 1. Friction Noise
+          const bufferSize = ctx.sampleRate * 0.25;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          let lastOut = 0.0;
+          for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            data[i] = (lastOut + (0.12 * white)) / 1.12;
+            lastOut = data[i];
+          }
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+          const noiseFilter = ctx.createBiquadFilter();
+          noiseFilter.type = 'bandpass';
+          noiseFilter.frequency.value = 1300;
+          noiseFilter.Q.value = 3.0;
+
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.0, ctx.currentTime);
+          noiseGain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.04);
+          noiseGain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 0.25);
+
+          noise.connect(noiseFilter);
+          noiseFilter.connect(noiseGain);
+          noiseGain.connect(ctx.destination);
+          noise.start();
+
+          // 2. Tone Swipe
+          const osc = ctx.createOscillator();
+          const oscGain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.2);
+
+          oscGain.gain.setValueAtTime(0.0, ctx.currentTime);
+          oscGain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.03);
+          oscGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+          osc.connect(oscGain);
+          oscGain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.22);
+        } catch(e) {
+          console.warn("Chalk sound failed: ", e);
+        }
+      };
+
+      window.playClickSound = function() {
+        try {
+          initAudio();
+          if (!ctx) return;
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.08);
+
+          gain.gain.setValueAtTime(0.0, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.09);
+        } catch(e) {
+          console.warn("Click sound failed:", e);
+        }
+      };
+
+      // 1. Upcoming Task Notification Sound (Crisp Messenger-style 2-tone melodic glass pop)
+      window.playNotificationChime = function() {
+        try {
+          initAudio();
+          if (!ctx) return;
+          if (ctx.state === 'suspended') ctx.resume();
+
+          const now = ctx.currentTime;
+          
+          // Tone 1: High crisp pop (C6 - 1046.5Hz)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(1046.5, now);
+          osc1.frequency.exponentialRampToValueAtTime(1318.5, now + 0.08); // E6
+          gain1.gain.setValueAtTime(0.0, now);
+          gain1.gain.linearRampToValueAtTime(0.22, now + 0.01);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.16);
+
+          // Tone 2: Harmonious resonance (G6 - 1567.9Hz) at +80ms
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(1567.9, now + 0.08);
+          gain2.gain.setValueAtTime(0.0, now + 0.08);
+          gain2.gain.linearRampToValueAtTime(0.18, now + 0.09);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(now + 0.08);
+          osc2.stop(now + 0.33);
+        } catch(e) {
+          console.warn("Upcoming task chime failed:", e);
+        }
+      };
+
+      // 2. Unfinished Task Notification Sound (Warm 2-pulse urgent soft chime)
+      window.playUnfinishedTaskChime = function() {
+        try {
+          initAudio();
+          if (!ctx) return;
+          if (ctx.state === 'suspended') ctx.resume();
+
+          const now = ctx.currentTime;
+
+          // Pulse 1: Warm warning pulse (Eb5 - 622.25Hz)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'triangle';
+          osc1.frequency.setValueAtTime(622.25, now);
+          gain1.gain.setValueAtTime(0.0, now);
+          gain1.gain.linearRampToValueAtTime(0.25, now + 0.015);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.13);
+
+          // Pulse 2: Secondary deeper alert pulse (C5 - 523.25Hz) at +120ms
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(523.25, now + 0.12);
+          gain2.gain.setValueAtTime(0.0, now + 0.12);
+          gain2.gain.linearRampToValueAtTime(0.28, now + 0.135);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(now + 0.12);
+          osc2.stop(now + 0.36);
+        } catch(e) {
+          console.warn("Unfinished task chime failed:", e);
+        }
+      };
+
+      window.triggerConfetti = function() {
+        try {
+          const duration = 3.0 * 1000;
+          const end = Date.now() + duration;
+
+          const canvas = document.createElement('canvas');
+          canvas.style.position = 'fixed';
+          canvas.style.top = '0';
+          canvas.style.left = '0';
+          canvas.style.width = '100vw';
+          canvas.style.height = '100vh';
+          canvas.style.pointerEvents = 'none';
+          canvas.style.zIndex = '999999';
+          document.body.appendChild(canvas);
+
+          const ctx = canvas.getContext('2d');
+          let width = canvas.width = window.innerWidth * window.devicePixelRatio;
+          let height = canvas.height = window.innerHeight * window.devicePixelRatio;
+
+          const colors = ['#F59E0B', '#0284C7', '#8B5CF6', '#10B981', '#EF4444', '#EC4899'];
+          const particles = [];
+
+          class Particle {
+            constructor() {
+              this.x = Math.random() * width;
+              this.y = -20;
+              this.r = (Math.random() * 6 + 4) * window.devicePixelRatio;
+              this.vx = (Math.random() * 4 - 2) * window.devicePixelRatio;
+              this.vy = (Math.random() * 5 + 4) * window.devicePixelRatio;
+              this.color = colors[Math.floor(Math.random() * colors.length)];
+              this.rotation = Math.random() * 360;
+              this.rotationSpeed = Math.random() * 10 - 5;
+            }
+            update() {
+              this.x += this.vx;
+              this.y += this.vy;
+              this.rotation += this.rotationSpeed;
+            }
+            draw() {
+              ctx.save();
+              ctx.translate(this.x, this.y);
+              ctx.rotate((this.rotation * Math.PI) / 180);
+              ctx.fillStyle = this.color;
+              ctx.fillRect(-this.r / 2, -this.r / 2, this.r, this.r);
+              ctx.restore();
+            }
+          }
+
+          // Initial burst upwards from bottom center
+          for (let i = 0; i < 120; i++) {
+            const p = new Particle();
+            p.x = width / 2;
+            p.y = height + 20;
+            const angle = Math.random() * Math.PI + Math.PI; // upward arc (180deg to 360deg)
+            const speed = (Math.random() * 15 + 8) * window.devicePixelRatio;
+            p.vx = Math.cos(angle) * speed;
+            p.vy = Math.sin(angle) * speed;
+            particles.push(p);
+          }
+
+          function animate() {
+            if (Date.now() > end && particles.length === 0) {
+              document.body.removeChild(canvas);
+              return;
+            }
+            ctx.clearRect(0, 0, width, height);
+
+            const gravity = 0.3 * window.devicePixelRatio;
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+              const p = particles[i];
+              p.vy += gravity;
+              p.update();
+              p.draw();
+
+              if (p.y > height + 20 || p.x < -20 || p.x > width + 20) {
+                particles.splice(i, 1);
+              }
+            }
+
+            if (Date.now() < end && particles.length < 150) {
+              const p = new Particle();
+              p.x = Math.random() * width;
+              p.y = -20;
+              p.vx = (Math.random() * 2 - 1) * window.devicePixelRatio;
+              p.vy = (Math.random() * 3 + 2) * window.devicePixelRatio;
+              particles.push(p);
+            }
+
+            requestAnimationFrame(animate);
+          }
+
+          animate();
+        } catch (e) {
+          console.warn("Confetti animation failed:", e);
+        }
+      };
+    })();
+  </script>
+  <script>
+    // Force unregister all active service workers safely
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          if (registrations && registrations.length > 0) {
+            for (let registration of registrations) {
+              registration.unregister().then(function() {
+                console.log('ServiceWorker unregistered.');
+              });
+            }
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('ServiceWorker unregistration failed:', e);
+    }
+
+    // Force clear all cache storage safely (crashes on HTTP in Safari if window.caches is null)
+    try {
+      if (typeof window !== 'undefined' && window.caches) {
+        window.caches.keys().then(function(names) {
+          if (names && names.length > 0) {
+            for (let name of names) {
+              window.caches.delete(name).then(function() {
+                console.log('Cache cleared: ' + name);
+              });
+            }
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Cache clearing failed:', e);
+    }
+
+    // Flutter bootstrap loader will load automatically via flutter_bootstrap.js
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

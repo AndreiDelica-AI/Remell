@@ -1,0 +1,141 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                      String            @id @default(uuid())
+  email                   String            @unique
+  passwordHash            String
+  displayName             String?
+  avatarUrl               String?
+  timezone                String            @default("UTC")
+  language                String            @default("en")
+  theme                   String            @default("system")
+  notificationPreferences String?           // SQLite does not support native Json type natively in same way; we can store it as stringified JSON or standard string
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  deletedAt               DateTime?
+  quickTasks              QuickTask[]
+  focusTasks              FocusTask[]
+  notifications           Notification[]
+  preferences             UserPreferences?
+  devices                 Device[]
+}
+
+model UserPreferences {
+  id             String @id @default(uuid())
+  userId         String @unique
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  homeLayout     String @default("option_a")
+  reminderStyle  String @default("smart")
+  quickTaskSort  String @default("newest")
+  focusCount     Int    @default(1)
+  wakeTime       String @default("07:00")
+  sleepTime      String @default("22:00")
+  language       String @default("en")
+  theme          String @default("system")
+}
+
+model QuickTask {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title            String
+  notes            String?
+  status           String    @default("pending") // pending, completed, archived
+  priority         String    @default("medium") // low, medium, high
+  reminderMode     String    @default("smart") // persistent, gentle, smart, manual
+  dueAt            DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  completedAt      DateTime?
+  archivedAt       DateTime?
+  aiClassification String?
+  confidenceScore  Float?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([completedAt])
+}
+
+model FocusTask {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title            String
+  description      String?
+  estimatedMinutes Int       @default(30)
+  status           String    @default("pending") // pending, active, completed
+  priority         String    @default("medium")
+  progress         Float     @default(0.0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  completedAt      DateTime?
+  subtasks         Subtask[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([completedAt])
+}
+
+model Subtask {
+  id          String    @id @default(uuid())
+  focusTaskId String
+  focusTask   FocusTask @relation(fields: [focusTaskId], references: [id], onDelete: Cascade)
+  title       String
+  status      String    @default("pending") // pending, completed
+  orderIndex  Int
+  completedAt DateTime?
+
+  @@index([focusTaskId])
+}
+
+model Notification {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId           String?   
+  notificationType String    
+  scheduledTime    DateTime
+  sentTime         DateTime?
+  openedTime       DateTime?
+  actionTaken      String?   
+  status           String    @default("scheduled") 
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledTime])
+}
+
+model AiMemory {
+  id                    String    @id @default(uuid())
+  taskId                String    
+  classification        String?
+  priority              String?
+  confidence            Float?
+  suggestedReminderTime DateTime?
+  suggestedSubtasks     String?   // Mapped to text/string representation
+  lastAiAnalysis        DateTime  @default(now())
+
+  @@index([taskId])
+}
+
+model Device {
+  id                     String   @id @default(uuid())
+  userId                 String
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fcmToken               String
+  platform               String
+  osVersion              String
+  appVersion             String
+  notificationPermission Boolean  @default(false)
+
+  @@index([userId])
+}
