@@ -9,13 +9,22 @@ class ApiClient {
     defaultValue: '',
   );
 
+  static String get resolvedBaseUrl {
+    if (apiBaseUrl.isNotEmpty) return apiBaseUrl;
+    if (kIsWeb && Uri.base.host.isNotEmpty) {
+      final isLocal = Uri.base.host == 'localhost' ||
+          Uri.base.host == '127.0.0.1';
+      if (isLocal) return 'http://${Uri.base.host}:5000';
+      return Uri.base.origin;
+    }
+    return 'http://localhost:5000';
+  }
+
   ApiClient({String? baseUrl, String? token}) {
-    final resolvedBaseUrl = baseUrl ?? (apiBaseUrl.isNotEmpty 
-        ? apiBaseUrl 
-        : (kIsWeb && Uri.base.host.isNotEmpty ? 'http://${Uri.base.host}:5000' : 'http://localhost:5000'));
+    final effectiveBaseUrl = baseUrl ?? resolvedBaseUrl;
     _dio = Dio(
       BaseOptions(
-        baseUrl: resolvedBaseUrl,
+        baseUrl: effectiveBaseUrl,
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {

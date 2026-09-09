@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+qwen_base/
+remell_qwen_gguf/
+prisma/*.db*
+*.log

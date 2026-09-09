@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/network/api_client.dart';
 import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/providers/theme_provider.dart';
 import '../../../shared/providers/tasks_provider.dart';
@@ -1249,7 +1250,7 @@ final newName = cleaned.length > 7 ? cleaned.substring(0, 7) : cleaned;
     if (token == null) return;
 
     final dio = Dio(BaseOptions(
-      baseUrl: kIsWeb && Uri.base.host.isNotEmpty ? 'http://${Uri.base.host}:5000' : 'http://localhost:5000',
+      baseUrl: ApiClient.resolvedBaseUrl,
       headers: {
         'Authorization': 'Bearer $token',
         'x-request-id': 'flutter-${DateTime.now().millisecondsSinceEpoch}',

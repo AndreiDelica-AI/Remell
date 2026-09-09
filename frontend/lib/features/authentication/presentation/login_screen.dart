@@ -12,6 +12,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/config/auth_config.dart';
 import '../../../core/config/legal_texts.dart';
+import '../../../core/network/api_client.dart';
 import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/widgets/time_background.dart';
 
@@ -37,7 +38,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Timer? _countdownTimer;
 
   late final _dio = Dio(BaseOptions(
-    baseUrl: kIsWeb && Uri.base.host.isNotEmpty ? 'http://${Uri.base.host}:5000' : 'http://localhost:5000',
+    baseUrl: ApiClient.resolvedBaseUrl,
     connectTimeout: const Duration(seconds: 5),
     receiveTimeout: const Duration(seconds: 5),
   ));

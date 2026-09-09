@@ -70,8 +70,12 @@ const authLimiter = rateLimit({
 // Apply Global Rate Limiter
 app.use(globalLimiter);
 
-// Start periodic database cleanup job
-startCleanupJob();
+// Long-running timers are not reliable in serverless functions. Run this only
+// for the persistent local/server deployment; production cleanup can be moved
+// to a Vercel Cron route later.
+if (!process.env.VERCEL) {
+  startCleanupJob();
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
