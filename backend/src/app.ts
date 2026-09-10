@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import * as helmetModule from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { startCleanupJob } from './jobs/cleanup.js';
 
@@ -15,6 +15,7 @@ import preferencesRoutes from './routes/preferences.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 
 const app = express();
+const helmet = helmetModule.default;
 
 // Secure App Headers
 app.use(helmet());
