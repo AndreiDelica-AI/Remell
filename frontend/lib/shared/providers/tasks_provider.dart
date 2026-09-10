@@ -9,23 +9,32 @@ import '../services/day_plan_service.dart';
 import '../utils/nlp_parser.dart';
 
 String removeEmojis(String input) {
-  return input.replaceAll(RegExp(
-      r'[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]',
-      unicode: true), '').trim();
+  return input
+      .replaceAll(
+          RegExp(
+              r'[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]',
+              unicode: true),
+          '')
+      .trim();
 }
 
 List<SubTaskItem> parseSubtasksFromNotes(String notes) {
   if (notes.trim().isEmpty || notes == 'No notes added.') return [];
   final steps = NlpParser.parseSubtasks(notes);
   if (steps.isNotEmpty) {
-    return steps.map((s) => SubTaskItem(title: s, scheduledTime: NlpParser.parseDeadline(s))).toList();
+    return steps
+        .map((s) =>
+            SubTaskItem(title: s, scheduledTime: NlpParser.parseDeadline(s)))
+        .toList();
   }
   final lines = notes.split(RegExp(r'\r?\n'));
   final List<SubTaskItem> items = [];
   for (var line in lines) {
     var cleaned = removeEmojis(line.trim());
     if (cleaned.isEmpty) continue;
-    if (cleaned.startsWith('-') || cleaned.startsWith('*') || cleaned.startsWith('•')) {
+    if (cleaned.startsWith('-') ||
+        cleaned.startsWith('*') ||
+        cleaned.startsWith('•')) {
       cleaned = cleaned.substring(1).trim();
     } else {
       final match = RegExp(r'^\d+[\.\)]\s*').firstMatch(cleaned);
@@ -34,7 +43,8 @@ List<SubTaskItem> parseSubtasksFromNotes(String notes) {
       }
     }
     if (cleaned.isNotEmpty) {
-      items.add(SubTaskItem(title: cleaned, scheduledTime: NlpParser.parseDeadline(cleaned)));
+      items.add(SubTaskItem(
+          title: cleaned, scheduledTime: NlpParser.parseDeadline(cleaned)));
     }
   }
   return items;
@@ -46,7 +56,11 @@ class SubTaskItem {
   bool isCompleted;
   final String? scheduledTime; // e.g. '09:00', '10:00', '11:00'
 
-  SubTaskItem({this.id, required this.title, this.isCompleted = false, this.scheduledTime});
+  SubTaskItem(
+      {this.id,
+      required this.title,
+      this.isCompleted = false,
+      this.scheduledTime});
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -59,7 +73,9 @@ class SubTaskItem {
         id: json['id']?.toString(),
         title: json['title'] ?? '',
         isCompleted: json['isCompleted'] ?? false,
-        scheduledTime: json['scheduledTime'] ?? json['time'] ?? NlpParser.parseDeadline(json['title'] ?? ''),
+        scheduledTime: json['scheduledTime'] ??
+            json['time'] ??
+            NlpParser.parseDeadline(json['title'] ?? ''),
       );
 }
 
@@ -71,7 +87,7 @@ class QuickTaskItem {
   final String notes;
   final bool isUrgent;
   final String difficulty; // 'low', 'medium', 'high'
-  final String? dueTime;   // e.g. '10:20'
+  final String? dueTime; // e.g. '10:20'
   final List<SubTaskItem> subtasks;
   final String? colorHex;
   final String? iconName;
@@ -90,7 +106,8 @@ class QuickTaskItem {
     this.iconName,
   });
 
-  bool get isCompleted => subtasks.isNotEmpty && subtasks.every((st) => st.isCompleted);
+  bool get isCompleted =>
+      subtasks.isNotEmpty && subtasks.every((st) => st.isCompleted);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -107,7 +124,8 @@ class QuickTaskItem {
       };
 
   factory QuickTaskItem.fromJson(Map<String, dynamic> json) => QuickTaskItem(
-        id: json['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: json['id']?.toString() ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         title: json['title'] ?? '',
         time: json['time'] ?? 'Just now',
         durationMinutes: json['durationMinutes'] ?? 10,
@@ -131,13 +149,14 @@ class FocusTaskItem {
   final String notes;
   final List<SubTaskItem> subtasks;
   final String difficulty; // 'low', 'medium', 'high'
-  final String? dueTime;   // e.g. '10:20'
+  final String? dueTime; // e.g. '10:20'
   final List<String> repeatDays;
   final String? colorHex;
   final String? iconName;
   final bool isCompleted;
-  final DateTime? repeatUntil;     // end date for recurring tasks
-  final List<String> skippedDates; // ISO date strings skipped (e.g. '2026-09-08')
+  final DateTime? repeatUntil; // end date for recurring tasks
+  final List<String>
+      skippedDates; // ISO date strings skipped (e.g. '2026-09-08')
 
   FocusTaskItem({
     required this.id,
@@ -156,15 +175,21 @@ class FocusTaskItem {
     this.skippedDates = const [],
   });
 
-  bool get isDone => isCompleted || (subtasks.isNotEmpty && subtasks.every((st) => st.isCompleted));
+  bool get isDone =>
+      isCompleted ||
+      (subtasks.isNotEmpty && subtasks.every((st) => st.isCompleted));
 
   int get durationMinutes {
     int total = 0;
-    final hrMatch = RegExp(r'(\d+)\s*(?:hr|hrs|hour|hours|h)\b', caseSensitive: false).firstMatch(duration);
+    final hrMatch =
+        RegExp(r'(\d+)\s*(?:hr|hrs|hour|hours|h)\b', caseSensitive: false)
+            .firstMatch(duration);
     if (hrMatch != null) {
       total += (int.tryParse(hrMatch.group(1)!) ?? 0) * 60;
     }
-    final minMatch = RegExp(r'(\d+)\s*(?:min|mins|minute|minutes|m)\b', caseSensitive: false).firstMatch(duration);
+    final minMatch =
+        RegExp(r'(\d+)\s*(?:min|mins|minute|minutes|m)\b', caseSensitive: false)
+            .firstMatch(duration);
     if (minMatch != null) {
       total += (int.tryParse(minMatch.group(1)!) ?? 0);
     }
@@ -207,11 +232,13 @@ class QuickTasksNotifier extends StateNotifier<List<QuickTaskItem>> {
         final dio = ref.read(apiClientProvider).client;
         final response = await dio.get('/quick-tasks');
         if (response.statusCode == 200 && response.data['data'] != null) {
-          final List rawList = response.data['data'] is List ? response.data['data'] : [];
+          final List rawList =
+              response.data['data'] is List ? response.data['data'] : [];
           state = rawList.map((item) {
             final String rawDesc = item['notes'] ?? '';
             return QuickTaskItem(
-              id: item['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+              id: item['id']?.toString() ??
+                  DateTime.now().millisecondsSinceEpoch.toString(),
               title: item['title'] ?? '',
               time: 'Just now',
               durationMinutes: 10,
@@ -278,13 +305,34 @@ class QuickTasksNotifier extends StateNotifier<List<QuickTaskItem>> {
   }
 
   Future<void> add(String title, int duration, String notes,
-      {bool isUrgent = false, String difficulty = 'medium', String? dueTime, List<String>? steps}) async {
+      {bool isUrgent = false,
+      String difficulty = 'medium',
+      String? dueTime,
+      List<String>? steps}) async {
     final cleanNotes = notes.isNotEmpty ? notes : 'No notes added.';
     final subtasks = (steps != null && steps.isNotEmpty)
-        ? steps.map((s) => SubTaskItem(title: s, scheduledTime: NlpParser.parseDeadline(s))).toList()
+        ? steps
+            .map((s) => SubTaskItem(
+                title: s, scheduledTime: NlpParser.parseDeadline(s)))
+            .toList()
         : parseSubtasksFromNotes(cleanNotes);
 
-    String createdId = DateTime.now().millisecondsSinceEpoch.toString();
+    final temporaryId = 'local-${DateTime.now().microsecondsSinceEpoch}';
+    final newTask = QuickTaskItem(
+      id: temporaryId,
+      title: title,
+      time: 'Just now',
+      durationMinutes: duration,
+      notes: cleanNotes,
+      isUrgent: isUrgent,
+      difficulty: difficulty,
+      dueTime: dueTime,
+      subtasks: subtasks,
+    );
+
+    // Update the UI immediately; the backend request can finish in the background.
+    state = [newTask, ...state];
+    _saveLocalTasks();
 
     try {
       final token = ref.read(authTokenProvider);
@@ -296,27 +344,31 @@ class QuickTasksNotifier extends StateNotifier<List<QuickTaskItem>> {
           'priority': isUrgent ? 'high' : difficulty,
         });
         if (response.statusCode == 201 && response.data['data'] != null) {
-          createdId = response.data['data']['id']?.toString() ?? createdId;
+          final serverId = response.data['data']['id']?.toString();
+          if (serverId != null && serverId.isNotEmpty) {
+            state = state.map((task) {
+              if (task.id != temporaryId) return task;
+              return QuickTaskItem(
+                id: serverId,
+                title: task.title,
+                time: task.time,
+                durationMinutes: task.durationMinutes,
+                notes: task.notes,
+                isUrgent: task.isUrgent,
+                difficulty: task.difficulty,
+                dueTime: task.dueTime,
+                subtasks: task.subtasks,
+                colorHex: task.colorHex,
+                iconName: task.iconName,
+              );
+            }).toList();
+            _saveLocalTasks();
+          }
         }
       }
     } catch (e) {
       debugPrint('[QuickTasks] Backend add failed: $e');
     }
-
-    final newTask = QuickTaskItem(
-      id: createdId,
-      title: title,
-      time: 'Just now',
-      durationMinutes: duration,
-      notes: cleanNotes,
-      isUrgent: isUrgent,
-      difficulty: difficulty,
-      dueTime: dueTime,
-      subtasks: subtasks,
-    );
-
-    state = [newTask, ...state];
-    _saveLocalTasks();
   }
 
   Future<void> removeAt(int index, {bool isCompleted = true}) async {
@@ -362,14 +414,16 @@ class QuickTasksNotifier extends StateNotifier<List<QuickTaskItem>> {
             : parseSubtasksFromNotes(task.notes);
         final updatedSubtasks = List<SubTaskItem>.from(
           existingSubtasks.map((st) => SubTaskItem(
-            id: st.id,
-            title: st.title,
-            isCompleted: st.isCompleted,
-            scheduledTime: st.scheduledTime ?? NlpParser.parseDeadline(st.title),
-          )),
+                id: st.id,
+                title: st.title,
+                isCompleted: st.isCompleted,
+                scheduledTime:
+                    st.scheduledTime ?? NlpParser.parseDeadline(st.title),
+              )),
         );
         if (index < updatedSubtasks.length) {
-          updatedSubtasks[index].isCompleted = !updatedSubtasks[index].isCompleted;
+          updatedSubtasks[index].isCompleted =
+              !updatedSubtasks[index].isCompleted;
         }
         return QuickTaskItem(
           id: task.id,
@@ -391,11 +445,17 @@ class QuickTasksNotifier extends StateNotifier<List<QuickTaskItem>> {
   }
 
   Future<void> updateTask(String id, String title, int duration, String notes,
-      {bool isUrgent = false, String difficulty = 'medium', String? dueTime, List<String>? steps}) async {
+      {bool isUrgent = false,
+      String difficulty = 'medium',
+      String? dueTime,
+      List<String>? steps}) async {
     state = state.map((task) {
       if (task.id == id) {
         final subtasks = (steps != null && steps.isNotEmpty)
-            ? steps.map((s) => SubTaskItem(title: s, scheduledTime: NlpParser.parseDeadline(s))).toList()
+            ? steps
+                .map((s) => SubTaskItem(
+                    title: s, scheduledTime: NlpParser.parseDeadline(s)))
+                .toList()
             : parseSubtasksFromNotes(notes);
         return QuickTaskItem(
           id: id,
@@ -428,7 +488,8 @@ class QuickTasksNotifier extends StateNotifier<List<QuickTaskItem>> {
   }
 }
 
-final quickTasksProvider = StateNotifierProvider<QuickTasksNotifier, List<QuickTaskItem>>((ref) {
+final quickTasksProvider =
+    StateNotifierProvider<QuickTasksNotifier, List<QuickTaskItem>>((ref) {
   ref.watch(authTokenProvider);
   ref.watch(authUserProvider);
   return QuickTasksNotifier(ref);
@@ -541,13 +602,13 @@ class ActiveTaskTimerNotifier extends StateNotifier<ActiveTaskTimerState> {
       final task = state.activeTask!;
       _timer?.cancel();
       ref.read(quickTasksProvider.notifier).add(
-        task.title,
-        durationMinutes,
-        task.notes,
-        isUrgent: task.isUrgent,
-        difficulty: task.difficulty,
-        dueTime: task.dueTime,
-      );
+            task.title,
+            durationMinutes,
+            task.notes,
+            isUrgent: task.isUrgent,
+            difficulty: task.difficulty,
+            dueTime: task.dueTime,
+          );
       state = ActiveTaskTimerState();
     }
   }
@@ -564,7 +625,8 @@ class ActiveTaskTimerNotifier extends StateNotifier<ActiveTaskTimerState> {
   }
 }
 
-final activeTaskTimerProvider = StateNotifierProvider<ActiveTaskTimerNotifier, ActiveTaskTimerState>((ref) {
+final activeTaskTimerProvider =
+    StateNotifierProvider<ActiveTaskTimerNotifier, ActiveTaskTimerState>((ref) {
   return ActiveTaskTimerNotifier(ref);
 });
 
@@ -596,7 +658,9 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
         final dio = ref.read(apiClientProvider).client;
         final response = await dio.get('/focus');
         if (response.statusCode == 200) {
-          final List data = response.data['data'] is List ? response.data['data'] : (response.data['data'] != null ? [response.data['data']] : []);
+          final List data = response.data['data'] is List
+              ? response.data['data']
+              : (response.data['data'] != null ? [response.data['data']] : []);
 
           state = data.map((taskData) {
             final List subtasksList = taskData['subtasks'] ?? [];
@@ -613,7 +677,9 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
               final end = parseStr.indexOf(']', start);
               if (end != -1) {
                 colorHex = parseStr.substring(start + 11, end);
-                parseStr = (parseStr.substring(0, start) + parseStr.substring(end + 1)).trim();
+                parseStr =
+                    (parseStr.substring(0, start) + parseStr.substring(end + 1))
+                        .trim();
               }
             }
             if (parseStr.contains('[iconName: ')) {
@@ -621,7 +687,9 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
               final end = parseStr.indexOf(']', start);
               if (end != -1) {
                 iconName = parseStr.substring(start + 11, end);
-                parseStr = (parseStr.substring(0, start) + parseStr.substring(end + 1)).trim();
+                parseStr =
+                    (parseStr.substring(0, start) + parseStr.substring(end + 1))
+                        .trim();
               }
             }
             if (parseStr.startsWith('[repeatDays: ')) {
@@ -644,17 +712,25 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
               notes = parseStr;
             }
 
-            final List<SubTaskItem> loadedSubtasks = subtasksList.map((st) => SubTaskItem(
-                  id: st['id']?.toString(),
-                  title: st['title'] ?? '',
-                  isCompleted: st['status'] == 'completed',
-                )).toList();
+            final List<SubTaskItem> loadedSubtasks = subtasksList
+                .map((st) => SubTaskItem(
+                      id: st['id']?.toString(),
+                      title: st['title'] ?? '',
+                      isCompleted: st['status'] == 'completed',
+                    ))
+                .toList();
 
             return FocusTaskItem(
-              id: taskData['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+              id: taskData['id']?.toString() ??
+                  DateTime.now().millisecondsSinceEpoch.toString(),
               title: taskData['title'] ?? '',
-              duration: formatDuration(taskData['estimatedMinutes'] as int? ?? 0),
-              timeSegment: taskData['priority'] == 'high' ? 'Night' : (taskData['priority'] == 'medium' ? 'Afternoon' : 'Morning'),
+              duration:
+                  formatDuration(taskData['estimatedMinutes'] as int? ?? 0),
+              timeSegment: taskData['priority'] == 'high'
+                  ? 'Night'
+                  : (taskData['priority'] == 'medium'
+                      ? 'Afternoon'
+                      : 'Morning'),
               notes: notes,
               difficulty: taskData['priority'] ?? 'medium',
               dueTime: dueTime,
@@ -662,7 +738,9 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
               colorHex: colorHex,
               iconName: iconName,
               isCompleted: taskData['status'] == 'completed',
-              subtasks: loadedSubtasks.isNotEmpty ? loadedSubtasks : parseSubtasksFromNotes(notes),
+              subtasks: loadedSubtasks.isNotEmpty
+                  ? loadedSubtasks
+                  : parseSubtasksFromNotes(notes),
             );
           }).toList();
           _saveLocalTasks();
@@ -679,22 +757,24 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
     if (!kIsWeb) return;
     try {
       final key = _getUserKey();
-      final list = state.map((item) => {
-        'id': item.id,
-        'title': item.title,
-        'duration': item.duration,
-        'timeSegment': item.timeSegment,
-        'notes': item.notes,
-        'difficulty': item.difficulty,
-        'dueTime': item.dueTime,
-        'repeatDays': item.repeatDays,
-        'colorHex': item.colorHex,
-        'iconName': item.iconName,
-        'isCompleted': item.isCompleted,
-        'subtasks': item.subtasks.map((st) => st.toJson()).toList(),
-        'repeatUntil': item.repeatUntil?.toIso8601String(),
-        'skippedDates': item.skippedDates,
-      }).toList();
+      final list = state
+          .map((item) => {
+                'id': item.id,
+                'title': item.title,
+                'duration': item.duration,
+                'timeSegment': item.timeSegment,
+                'notes': item.notes,
+                'difficulty': item.difficulty,
+                'dueTime': item.dueTime,
+                'repeatDays': item.repeatDays,
+                'colorHex': item.colorHex,
+                'iconName': item.iconName,
+                'isCompleted': item.isCompleted,
+                'subtasks': item.subtasks.map((st) => st.toJson()).toList(),
+                'repeatUntil': item.repeatUntil?.toIso8601String(),
+                'skippedDates': item.skippedDates,
+              })
+          .toList();
       final jsonStr = jsonEncode(list);
       html.window.localStorage[key] = jsonStr;
     } catch (_) {}
@@ -719,7 +799,8 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
 
           final String? untilStr = item['repeatUntil'] as String?;
           return FocusTaskItem(
-            id: item['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            id: item['id']?.toString() ??
+                DateTime.now().millisecondsSinceEpoch.toString(),
             title: item['title'] ?? '',
             duration: item['duration'] ?? '20 min',
             timeSegment: item['timeSegment'] ?? 'Morning',
@@ -752,19 +833,37 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
     return '$hours hr $remainingMinutes min';
   }
 
-  Future<void> add(String title, String timeSegment, String notes, List<String> steps,
-      {String difficulty = 'medium', String? dueTime, int? durationMinutes, List<String> repeatDays = const [],
-      String? colorHex, String? iconName, DateTime? repeatUntil}) async {
+  Future<void> add(
+      String title, String timeSegment, String notes, List<String> steps,
+      {String difficulty = 'medium',
+      String? dueTime,
+      int? durationMinutes,
+      List<String> repeatDays = const [],
+      String? colorHex,
+      String? iconName,
+      DateTime? repeatUntil}) async {
+    final int estimatedMin =
+        durationMinutes ?? (steps.isNotEmpty ? steps.length * 10 : 20);
+    final temporaryId = 'local-${DateTime.now().microsecondsSinceEpoch}';
+
+    _localAdd(
+      title,
+      timeSegment,
+      notes,
+      steps,
+      id: temporaryId,
+      difficulty: difficulty,
+      dueTime: dueTime,
+      durationMinutes: estimatedMin,
+      repeatDays: repeatDays,
+      colorHex: colorHex,
+      iconName: iconName,
+      repeatUntil: repeatUntil,
+    );
+
     try {
       final token = ref.read(authTokenProvider);
-      final int estimatedMin = durationMinutes ?? (steps.isNotEmpty ? steps.length * 10 : 20);
-
-      if (token == null) {
-        _localAdd(title, timeSegment, notes, steps, difficulty: difficulty, dueTime: dueTime,
-            durationMinutes: estimatedMin, repeatDays: repeatDays, colorHex: colorHex,
-            iconName: iconName, repeatUntil: repeatUntil);
-        return;
-      }
+      if (token == null) return;
 
       final dio = ref.read(apiClientProvider).client;
       String backendDesc = notes;
@@ -781,37 +880,70 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
         backendDesc = '[repeatDays: ${repeatDays.join(",")}] $backendDesc';
       }
       if (repeatUntil != null) {
-        backendDesc = '[repeatUntil: ${repeatUntil.toIso8601String()}] $backendDesc';
+        backendDesc =
+            '[repeatUntil: ${repeatUntil.toIso8601String()}] $backendDesc';
       }
 
-      await dio.post('/focus', data: {
+      final response = await dio.post('/focus', data: {
         'title': title,
         'description': backendDesc,
         'estimatedMinutes': estimatedMin,
         'priority': difficulty,
       });
-      await _loadTasks();
+      final serverId = response.data?['data']?['id']?.toString();
+      if (response.statusCode == 201 &&
+          serverId != null &&
+          serverId.isNotEmpty) {
+        state = state.map((task) {
+          if (task.id != temporaryId) return task;
+          return FocusTaskItem(
+            id: serverId,
+            title: task.title,
+            duration: task.duration,
+            timeSegment: task.timeSegment,
+            notes: task.notes,
+            subtasks: task.subtasks,
+            difficulty: task.difficulty,
+            dueTime: task.dueTime,
+            repeatDays: task.repeatDays,
+            colorHex: task.colorHex,
+            iconName: task.iconName,
+            isCompleted: task.isCompleted,
+            repeatUntil: task.repeatUntil,
+            skippedDates: task.skippedDates,
+          );
+        }).toList();
+        _saveLocalTasks();
+      }
     } catch (e) {
-      final int estimatedMin = durationMinutes ?? (steps.isNotEmpty ? steps.length * 10 : 20);
-      _localAdd(title, timeSegment, notes, steps, difficulty: difficulty, dueTime: dueTime,
-          durationMinutes: estimatedMin, repeatDays: repeatDays, colorHex: colorHex,
-          iconName: iconName, repeatUntil: repeatUntil);
+      debugPrint('[FocusTasks] Backend add failed: $e');
     }
   }
 
-  void _localAdd(String title, String timeSegment, String notes, List<String> steps,
-      {String difficulty = 'medium', String? dueTime, int? durationMinutes,
-      List<String> repeatDays = const [], String? colorHex, String? iconName, DateTime? repeatUntil}) {
+  void _localAdd(
+      String title, String timeSegment, String notes, List<String> steps,
+      {String? id,
+      String difficulty = 'medium',
+      String? dueTime,
+      int? durationMinutes,
+      List<String> repeatDays = const [],
+      String? colorHex,
+      String? iconName,
+      DateTime? repeatUntil}) {
     final subtasks = steps.isNotEmpty
-        ? steps.map((s) => SubTaskItem(title: s, scheduledTime: NlpParser.parseDeadline(s))).toList()
+        ? steps
+            .map((s) => SubTaskItem(
+                title: s, scheduledTime: NlpParser.parseDeadline(s)))
+            .toList()
         : parseSubtasksFromNotes(notes);
 
-    final int estimatedMin = durationMinutes ?? (steps.isNotEmpty ? steps.length * 10 : 20);
+    final int estimatedMin =
+        durationMinutes ?? (steps.isNotEmpty ? steps.length * 10 : 20);
 
     state = [
       ...state,
       FocusTaskItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         title: title,
         duration: formatDuration(estimatedMin),
         timeSegment: timeSegment,
@@ -831,16 +963,26 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
   /// Skip a single occurrence of a recurring task on a given date.
   /// Adds the ISO date string (yyyy-MM-dd) to the task's skippedDates list.
   void skipOccurrence(String taskId, DateTime date) {
-    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     state = state.map((task) {
       if (task.id != taskId) return task;
       final newSkipped = [...task.skippedDates, dateStr];
       return FocusTaskItem(
-        id: task.id, title: task.title, duration: task.duration,
-        timeSegment: task.timeSegment, notes: task.notes, difficulty: task.difficulty,
-        dueTime: task.dueTime, repeatDays: task.repeatDays, colorHex: task.colorHex,
-        iconName: task.iconName, subtasks: task.subtasks, isCompleted: task.isCompleted,
-        repeatUntil: task.repeatUntil, skippedDates: newSkipped,
+        id: task.id,
+        title: task.title,
+        duration: task.duration,
+        timeSegment: task.timeSegment,
+        notes: task.notes,
+        difficulty: task.difficulty,
+        dueTime: task.dueTime,
+        repeatDays: task.repeatDays,
+        colorHex: task.colorHex,
+        iconName: task.iconName,
+        subtasks: task.subtasks,
+        isCompleted: task.isCompleted,
+        repeatUntil: task.repeatUntil,
+        skippedDates: newSkipped,
       );
     }).toList();
     _saveLocalTasks();
@@ -854,10 +996,11 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
     final totalDailyTasks = state.length;
     if (totalDailyTasks == 0) return;
     final completedDailyTasks = state.where((t) => t.isDone).length;
-    final streakExtended = ref.read(streakProvider.notifier).evaluateDailyTasksStreak(
-      totalDailyTasks: totalDailyTasks,
-      completedDailyTasks: completedDailyTasks,
-    );
+    final streakExtended =
+        ref.read(streakProvider.notifier).evaluateDailyTasksStreak(
+              totalDailyTasks: totalDailyTasks,
+              completedDailyTasks: completedDailyTasks,
+            );
 
     if (streakExtended && kIsWeb) {
       try {
@@ -874,17 +1017,20 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
             : parseSubtasksFromNotes(task.notes);
         final newSubtasks = List<SubTaskItem>.from(
           existingSubtasks.map((st) => SubTaskItem(
-            id: st.id,
-            title: st.title,
-            isCompleted: st.isCompleted,
-            scheduledTime: st.scheduledTime ?? NlpParser.parseDeadline(st.title),
-          )),
+                id: st.id,
+                title: st.title,
+                isCompleted: st.isCompleted,
+                scheduledTime:
+                    st.scheduledTime ?? NlpParser.parseDeadline(st.title),
+              )),
         );
         if (subtaskIndex < newSubtasks.length) {
-          newSubtasks[subtaskIndex].isCompleted = !newSubtasks[subtaskIndex].isCompleted;
+          newSubtasks[subtaskIndex].isCompleted =
+              !newSubtasks[subtaskIndex].isCompleted;
         }
 
-        final bool allDone = newSubtasks.isNotEmpty && newSubtasks.every((st) => st.isCompleted);
+        final bool allDone =
+            newSubtasks.isNotEmpty && newSubtasks.every((st) => st.isCompleted);
         if (allDone) {
           DayPlanService.recordCompletedTask(task.title, type: 'Focus Task');
           if (segmentStreakHistory.containsKey(task.timeSegment)) {
@@ -918,12 +1064,15 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
     state = state.map((task) {
       if (task.id == focusTaskId) {
         final newDoneState = !task.isDone;
-        final updatedSubtasks = task.subtasks.map((st) => SubTaskItem(
-          id: st.id,
-          title: st.title,
-          isCompleted: newDoneState,
-          scheduledTime: st.scheduledTime ?? NlpParser.parseDeadline(st.title),
-        )).toList();
+        final updatedSubtasks = task.subtasks
+            .map((st) => SubTaskItem(
+                  id: st.id,
+                  title: st.title,
+                  isCompleted: newDoneState,
+                  scheduledTime:
+                      st.scheduledTime ?? NlpParser.parseDeadline(st.title),
+                ))
+            .toList();
 
         if (newDoneState) {
           DayPlanService.recordCompletedTask(task.title, type: 'Focus Task');
@@ -955,7 +1104,6 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
     _checkDailyStreakThreshold();
   }
 
-
   void updateTaskNotes(String id, String newNotes) {
     state = state.map((task) {
       if (task.id == id) {
@@ -981,10 +1129,16 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
     _saveLocalTasks();
   }
 
-  void updateTask(String id, String title, String timeSegment, String notes, List<String> steps,
-      {String difficulty = 'medium', String? dueTime, int? durationMinutes,
-      List<String> repeatDays = const [], String? colorHex, String? iconName,
-      DateTime? repeatUntil, bool clearRepeatUntil = false}) {
+  void updateTask(String id, String title, String timeSegment, String notes,
+      List<String> steps,
+      {String difficulty = 'medium',
+      String? dueTime,
+      int? durationMinutes,
+      List<String> repeatDays = const [],
+      String? colorHex,
+      String? iconName,
+      DateTime? repeatUntil,
+      bool clearRepeatUntil = false}) {
     state = state.map((task) {
       if (task.id == id) {
         List<SubTaskItem> subtasks;
@@ -992,20 +1146,25 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
           subtasks = steps.map((s) {
             final existing = task.subtasks.firstWhere(
               (st) => st.title.toLowerCase().trim() == s.toLowerCase().trim(),
-              orElse: () => SubTaskItem(title: s, scheduledTime: NlpParser.parseDeadline(s)),
+              orElse: () => SubTaskItem(
+                  title: s, scheduledTime: NlpParser.parseDeadline(s)),
             );
             return SubTaskItem(
               id: existing.id,
               title: s,
               isCompleted: existing.isCompleted,
-              scheduledTime: existing.scheduledTime ?? NlpParser.parseDeadline(s),
+              scheduledTime:
+                  existing.scheduledTime ?? NlpParser.parseDeadline(s),
             );
           }).toList();
         } else {
-          subtasks = task.subtasks.isNotEmpty ? task.subtasks : parseSubtasksFromNotes(notes);
+          subtasks = task.subtasks.isNotEmpty
+              ? task.subtasks
+              : parseSubtasksFromNotes(notes);
         }
 
-        final int estimatedMin = durationMinutes ?? (steps.isNotEmpty ? steps.length * 10 : 20);
+        final int estimatedMin =
+            durationMinutes ?? (steps.isNotEmpty ? steps.length * 10 : 20);
 
         return FocusTaskItem(
           id: id,
@@ -1020,7 +1179,8 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
           iconName: iconName ?? task.iconName,
           subtasks: subtasks,
           isCompleted: task.isCompleted,
-          repeatUntil: clearRepeatUntil ? null : (repeatUntil ?? task.repeatUntil),
+          repeatUntil:
+              clearRepeatUntil ? null : (repeatUntil ?? task.repeatUntil),
           skippedDates: task.skippedDates,
         );
       }
@@ -1076,7 +1236,8 @@ class FocusTasksNotifier extends StateNotifier<List<FocusTaskItem>> {
   }
 }
 
-final focusTasksProvider = StateNotifierProvider<FocusTasksNotifier, List<FocusTaskItem>>((ref) {
+final focusTasksProvider =
+    StateNotifierProvider<FocusTasksNotifier, List<FocusTaskItem>>((ref) {
   ref.watch(authTokenProvider);
   ref.watch(authUserProvider);
   return FocusTasksNotifier(ref);
@@ -1152,7 +1313,8 @@ class DoomScrollNotifier extends StateNotifier<DoomScrollState> {
   }
 }
 
-final doomScrollProvider = StateNotifierProvider<DoomScrollNotifier, DoomScrollState>((ref) {
+final doomScrollProvider =
+    StateNotifierProvider<DoomScrollNotifier, DoomScrollState>((ref) {
   return DoomScrollNotifier();
 });
 
@@ -1183,7 +1345,8 @@ String formatTimeAmPm(String? dueTime) {
     final parts = trimmed.split(':');
     int? h = int.tryParse(parts[0].replaceAll(RegExp(r'[^0-9]'), ''));
     if (h == null) return trimmed;
-    final mStr = parts.length > 1 ? parts[1].replaceAll(RegExp(r'[^0-9]'), '') : '00';
+    final mStr =
+        parts.length > 1 ? parts[1].replaceAll(RegExp(r'[^0-9]'), '') : '00';
     final m = int.tryParse(mStr) ?? 0;
 
     final lower = trimmed.toLowerCase();
@@ -1212,7 +1375,9 @@ String formatTimeAmPm(String? dueTime) {
 
 String formatDurationString(String? duration) {
   if (duration == null || duration.trim().isEmpty) return '0 min';
-  if (duration.contains('hr') || duration.contains('hour') || RegExp(r'\d+h\b').hasMatch(duration)) {
+  if (duration.contains('hr') ||
+      duration.contains('hour') ||
+      RegExp(r'\d+h\b').hasMatch(duration)) {
     return duration;
   }
   final digits = int.tryParse(duration.replaceAll(RegExp(r'[^0-9]'), ''));
@@ -1221,5 +1386,3 @@ String formatDurationString(String? duration) {
   }
   return duration;
 }
-
-
