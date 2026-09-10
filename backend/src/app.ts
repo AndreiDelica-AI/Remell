@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import * as helmetModule from 'helmet';
+import type { HelmetOptions } from 'helmet';
+import type { RequestHandler } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { startCleanupJob } from './jobs/cleanup.js';
@@ -15,7 +17,9 @@ import preferencesRoutes from './routes/preferences.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 
 const app = express();
-const helmet = helmetModule.default;
+const helmet = helmetModule.default as unknown as (
+  options?: Readonly<HelmetOptions>,
+) => RequestHandler;
 
 // Secure App Headers
 app.use(helmet());
