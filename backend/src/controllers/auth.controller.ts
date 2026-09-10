@@ -25,6 +25,76 @@ const generateTokens = (user: { id: string; email: string }) => {
   return { accessToken, refreshToken };
 };
 
+export const refreshSession = async (req: Request, res: Response, next: NextFunction) => {
+  const { refreshToken } = req.body;
+  const requestId = req.headers['x-request-id'] as string;
+
+  if (typeof refreshToken !== 'string' || refreshToken.length === 0) {
+    return res.status(401).json({
+      success: false,
+      message: 'A valid refresh token is required.',
+      data: null,
+      errors: ['Missing refresh token'],
+      timestamp: new Date().toISOString(),
+      request_id: requestId
+    });
+  }
+
+  try {
+    const payload = jwt.verify(refreshToken, config.jwtRefreshSecret) as {
+      id: string;
+      email: string;
+    };
+    const user = await prisma.user.findFirst({
+      where: { id: payload.id, deletedAt: null },
+      include: { preferences: true }
+    });
+
+    if (!user || user.email !== payload.email) {
+      return res.status(401).json({
+        success: false,
+        message: 'Your session is no longer valid. Please sign in again.',
+        data: null,
+        errors: ['Invalid refresh token'],
+        timestamp: new Date().toISOString(),
+        request_id: requestId
+      });
+    }
+
+    const tokens = generateTokens(user);
+    return res.status(200).json({
+      success: true,
+      message: 'Session refreshed successfully.',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+          theme: user.theme,
+          language: user.language,
+          preferences: user.preferences
+        },
+        ...tokens
+      },
+      timestamp: new Date().toISOString(),
+      request_id: requestId
+    });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({
+        success: false,
+        message: 'Your session has expired. Please sign in again.',
+        data: null,
+        errors: ['Expired or invalid refresh token'],
+        timestamp: new Date().toISOString(),
+        request_id: requestId
+      });
+    }
+    next(error);
+  }
+};
+
 const verificationCodes = new Map<string, { code: string; expires: Date }>();
 
 export const sendVerificationCode = async (req: Request, res: Response, next: NextFunction) => {

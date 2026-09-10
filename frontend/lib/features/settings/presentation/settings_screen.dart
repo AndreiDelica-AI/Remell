@@ -645,11 +645,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onPressed: () {
               Navigator.pop(ctx);
               if (kIsWeb) {
-                final token = html.window.localStorage['remell_token'];
-                final user = html.window.localStorage['remell_user'];
-                html.window.localStorage.clear();
-                if (token != null) html.window.localStorage['remell_token'] = token;
-                if (user != null) html.window.localStorage['remell_user'] = user;
+                clearLocalCachePreservingAuth();
               }
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

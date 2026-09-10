@@ -23,9 +23,11 @@ import 'shared/services/day_plan_service.dart';
 import 'shared/bottom_sheets/plan_tomorrow_sheet.dart';
 import 'shared/dialogs/missed_tasks_dialog.dart';
 import 'shared/services/smart_notification_scheduler.dart';
+import 'shared/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await restoreAuthSession();
   try {
     debugPrint('[Initialization] Initializing NotificationService...');
     await NotificationService.initialize();

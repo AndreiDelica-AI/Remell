@@ -235,9 +235,10 @@ final name = cleaned.length > 7 ? cleaned.substring(0, 7) : cleaned;
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data['data'];
         final token = data['accessToken'] as String;
+        final refreshToken = data['refreshToken'] as String;
         final user = data['user'] as Map<String, dynamic>;
 
-        saveAuthSession(token, user);
+        saveAuthSession(token, user, refreshToken: refreshToken);
         ref.read(authTokenProvider.notifier).state = token;
         ref.read(authUserProvider.notifier).state = user;
 
@@ -488,9 +489,10 @@ final name = cleaned.length > 7 ? cleaned.substring(0, 7) : cleaned;
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data['data'];
         final token = data['accessToken'] as String;
+        final refreshToken = data['refreshToken'] as String;
         final user = data['user'] as Map<String, dynamic>;
 
-        saveAuthSession(token, user);
+        saveAuthSession(token, user, refreshToken: refreshToken);
         ref.read(authTokenProvider.notifier).state = token;
         ref.read(authUserProvider.notifier).state = user;
 

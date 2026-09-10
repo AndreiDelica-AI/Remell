@@ -334,40 +334,6 @@
     })();
   </script>
   <script>
-    // Force unregister all active service workers safely
-    try {
-      if ('serviceWorker' in navigator && navigator.serviceWorker) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          if (registrations && registrations.length > 0) {
-            for (let registration of registrations) {
-              registration.unregister().then(function() {
-                console.log('ServiceWorker unregistered.');
-              });
-            }
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('ServiceWorker unregistration failed:', e);
-    }
-
-    // Force clear all cache storage safely (crashes on HTTP in Safari if window.caches is null)
-    try {
-      if (typeof window !== 'undefined' && window.caches) {
-        window.caches.keys().then(function(names) {
-          if (names && names.length > 0) {
-            for (let name of names) {
-              window.caches.delete(name).then(function() {
-                console.log('Cache cleared: ' + name);
-              });
-            }
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('Cache clearing failed:', e);
-    }
-
     // Flutter bootstrap loader will load automatically via flutter_bootstrap.js
   </script>
   <script src="flutter_bootstrap.js" async></script>
