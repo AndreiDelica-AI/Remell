@@ -16,7 +16,6 @@
     "@prisma/client": "^5.18.0",
     "apple-signin-auth": "^2.1.0",
     "argon2": "^0.40.3",
-    "bullmq": "^5.8.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -25,8 +24,7 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "nodemailer": "^9.0.5",
-    "redis": "^4.7.0"
+    "nodemailer": "^9.0.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
