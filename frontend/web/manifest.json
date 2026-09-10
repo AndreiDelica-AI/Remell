@@ -1,11 +1,11 @@
 {
-    "name": "remell",
-    "short_name": "remell",
+    "name": "Remell: Memory & Focus Assistant",
+    "short_name": "Remell",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F172A",
+    "theme_color": "#2563EB",
+    "description": "An AI-powered memory and focus assistant.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
